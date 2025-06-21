@@ -1,4 +1,4 @@
-module main.go
+module pwgo
 
 go 1.23.0
 
