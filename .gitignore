@@ -1,3 +1,7 @@
+/dist
+pwgo
+pwgo.exe
+.DS_Store
 
 # Playwright
 /tests
