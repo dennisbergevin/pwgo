@@ -112,6 +112,7 @@ type model struct {
 	quitting     bool
 	projects     []string
 	fileToSpecs  map[string][]item
+	extraArgs    []string
 }
 
 var keyMap = keymap{
@@ -123,8 +124,9 @@ var keyMap = keymap{
 }
 
 var (
-	statusSelectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render // Green
-	statusRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render  // Red
+	statusSelectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render
+	statusRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render
+	rootStyle         = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230")).Padding(0, 1)
 )
 
 var (
@@ -133,7 +135,7 @@ var (
 	jsonDataPath string
 )
 
-func NewModel(pwData PlaywrightJSON, projects []string) model {
+func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) model {
 	selectedList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 20)
 
 	selectedList.AdditionalShortHelpKeys = func() []key.Binding {
@@ -159,10 +161,11 @@ func NewModel(pwData PlaywrightJSON, projects []string) model {
 		tagToSpecs:  tagToSpecs,
 		fileToSpecs: fileToSpecs,
 		projects:    projects,
+		extraArgs:   extraArgs,
 	}
 }
 
-func initData(projects []string, onlyChanged, lastFailed bool) (PlaywrightJSON, error) {
+func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert string) (PlaywrightJSON, error) {
 	args := []string{"playwright", "test", "--list", "--reporter=json"}
 	if onlyChanged {
 		args = append(args, "--only-changed")
@@ -172,6 +175,12 @@ func initData(projects []string, onlyChanged, lastFailed bool) (PlaywrightJSON, 
 	}
 	if configPath != "" {
 		args = append(args, "--config", configPath)
+	}
+	if grep != "" {
+		args = append(args, "--grep", grep)
+	}
+	if grepInvert != "" {
+		args = append(args, "--grep-invert", grepInvert)
 	}
 	for _, p := range projects {
 		args = append(args, "--project", p)
@@ -188,6 +197,10 @@ func initData(projects []string, onlyChanged, lastFailed bool) (PlaywrightJSON, 
 	if jsonErr := json.Unmarshal(out.Bytes(), &pwData); jsonErr != nil {
 		// If it's not even valid JSON, return the raw output + error
 		return PlaywrightJSON{}, fmt.Errorf("failed to parse JSON output: %w\nOutput:\n%s", jsonErr, out.String())
+	}
+
+	if len(pwData.Suites) == 0 {
+		return pwData, fmt.Errorf("No tests found")
 	}
 
 	if len(pwData.Errors) > 0 {
@@ -248,6 +261,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if configPath != "" {
 						args = append(args, "--config", configPath)
 					}
+					args = append(args, m.extraArgs...)
 					it := selectedItem.(item)
 
 					if specs, ok := m.tagToSpecs[it.title]; ok && it.source == "Tags" {
@@ -271,6 +285,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							arg = it.title
 						}
 						args = append(args, arg)
+						args = append(args, m.extraArgs...)
 					}
 
 					for _, p := range m.projects {
@@ -361,6 +376,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.lists[3].SetItems(updated)
 
+					// Reset filtering
+					m.lists[m.focusedIdx].ResetFilter()
+
 					removedMsg := fmt.Sprintf("Removed %s", strings.ToLower(selectedItem.(item).source[:len(selectedItem.(item).source)-1]))
 					return m, m.lists[3].NewStatusMessage(statusRemoveStyle(removedMsg))
 				} else {
@@ -384,6 +402,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					m.lists[m.focusedIdx].SetItems(newItems)
+
+					// Reset filtering
+					m.lists[m.focusedIdx].ResetFilter()
 
 					addedMsg := fmt.Sprintf("Selected %s", strings.ToLower(selectedItem.(item).source[:len(selectedItem.(item).source)-1]))
 					return m, m.lists[m.focusedIdx].NewStatusMessage(statusSelectStyle(addedMsg))
@@ -420,11 +441,11 @@ func collectData(
 	seenTests map[string]struct{},
 	fileTagMap map[string]map[string]struct{},
 	fileToSpecs map[string][]item,
+	fileToProjects map[string]map[string]struct{},
+	tagToProjects map[string]map[string]struct{},
 ) {
 	fullTitle := suiteTitle
-
-	suiteTitleIsFile := suite.Title == suite.File || filepath.Base(suite.Title) == filepath.Base(suite.File)
-	if suite.Title != "" && !suiteTitleIsFile {
+	if suite.Title != "" && suite.Title != suite.File && filepath.Base(suite.Title) != filepath.Base(suite.File) {
 		if fullTitle != "" {
 			fullTitle += " › "
 		}
@@ -437,6 +458,21 @@ func collectData(
 			testTitle += " › "
 		}
 		testTitle += spec.Title
+
+		for _, test := range spec.Tests {
+			// Track projects per tag
+			for _, tag := range spec.Tags {
+				if _, ok := tagToProjects[tag]; !ok {
+					tagToProjects[tag] = map[string]struct{}{}
+				}
+				tagToProjects[tag][test.ProjectName] = struct{}{}
+			}
+			// Track projects per file
+			if _, ok := fileToProjects[spec.File]; !ok {
+				fileToProjects[spec.File] = map[string]struct{}{}
+			}
+			fileToProjects[spec.File][test.ProjectName] = struct{}{}
+		}
 
 		testKey := fmt.Sprintf("%s|%s|%d", spec.Title, spec.File, spec.Line)
 		if _, exists := seenTests[testKey]; !exists {
@@ -469,7 +505,7 @@ func collectData(
 	}
 
 	for _, child := range suite.Suites {
-		collectData(child, fullTitle, testItems, fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs)
+		collectData(child, fullTitle, testItems, fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs, fileToProjects, tagToProjects) // pass new maps down
 	}
 }
 
@@ -483,9 +519,11 @@ func buildLists(pwData PlaywrightJSON) (
 	fileToSpecs := map[string][]item{}
 	seenTests := map[string]struct{}{}
 	fileTagMap := map[string]map[string]struct{}{}
+	fileToProjects := map[string]map[string]struct{}{} // NEW
+	tagToProjects := map[string]map[string]struct{}{}  // NEW
 
 	for _, suite := range pwData.Suites {
-		collectData(suite, "", &testItems, &fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs)
+		collectData(suite, "", &testItems, &fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs, fileToProjects, tagToProjects)
 	}
 
 	uniqueFileMap := map[string]struct{}{}
@@ -503,22 +541,25 @@ func buildLists(pwData PlaywrightJSON) (
 		sort.Strings(tags)
 
 		count := len(fileToSpecs[file])
+		projectCount := len(fileToProjects[file]) // Use pre-collected projects count
 
 		uniqueFiles = append(uniqueFiles, item{
 			title:       file,
 			source:      "Files",
 			tags:        tags,
-			description: fmt.Sprintf("%d test%s", count, plural(count)),
+			description: fmt.Sprintf("%d test%s across %d project%s", count*projectCount, plural(count*projectCount), projectCount, plural(projectCount)),
 		})
 	}
 
 	var tagItems []list.Item
 	for tag := range tagSet {
 		count := len(tagToSpecs[tag])
+		projectCount := len(tagToProjects[tag]) // Use pre-collected projects count
+
 		tagItems = append(tagItems, item{
 			title:       tag,
 			source:      "Tags",
-			description: fmt.Sprintf("%d test%s", count, plural(count)),
+			description: fmt.Sprintf("%d test%s across %d project%s", count*projectCount, plural(count*projectCount), projectCount, plural(projectCount)),
 		})
 	}
 
@@ -554,9 +595,53 @@ func buildLists(pwData PlaywrightJSON) (
 	return testList, fileList, tagList, tagToSpecs, fileToSpecs
 }
 
+func printHelp() {
+	appName := rootStyle.Render("pwgo")
+
+	sectionTitle := lipgloss.NewStyle().Foreground(lipgloss.Color("62")).Bold(true)
+	description := lipgloss.NewStyle().Faint(true)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "\n%s - Multi-list cli tool to run your Playwright suite\n\n", appName)
+
+	fmt.Fprintln(&b, sectionTitle.Render("Usage"))
+	fmt.Fprintln(&b, "  pwgo [options]\n")
+
+	fmt.Fprintln(&b, sectionTitle.Render("Options"))
+	fmt.Fprintln(&b, "  --help, -h              "+description.Render("Show this help menu"))
+	fmt.Fprintln(&b, "  --project <name>...      "+description.Render("Specify project(s) to run tests for"))
+	fmt.Fprintln(&b, "  --project=<name>...      "+description.Render("Specify project(s) (alternative syntax)"))
+	fmt.Fprintln(&b, "  --grep, -g <pattern>        "+description.Render("Only include tests matching this pattern (for --list only)"))
+	fmt.Fprintln(&b, "  --grep-invert, -gv <pattern> "+description.Render("Exclude tests matching this pattern (for --list only)"))
+	fmt.Fprintln(&b, "  --config, -c <path>      "+description.Render("Path to Playwright config file"))
+	fmt.Fprintln(&b, "  --config=<path>          "+description.Render("Path to Playwright config file (alternative syntax)"))
+	fmt.Fprintln(&b, "  --json-data-path <path>  "+description.Render("Load Playwright test data from JSON file"))
+	fmt.Fprintln(&b, "  --json-data-path=<path>  "+description.Render("Load Playwright test data from JSON file (alternative syntax)"))
+	fmt.Fprintln(&b, "  --only-changed           "+description.Render("Run only tests related to changed files"))
+	fmt.Fprintln(&b, "  --last-failed            "+description.Render("Run only last failed tests"))
+	fmt.Fprintln(&b, "  --ui                     "+description.Render("Run tests in Playwright UI mode"))
+	fmt.Fprintln(&b, "  --headed                 "+description.Render("Run tests headed (with UI)"))
+
+	fmt.Fprintln(&b, "\n"+sectionTitle.Render("Examples"))
+	fmt.Fprintln(&b, "  pwgo --project=webkit --only-changed")
+	fmt.Fprintln(&b, "  pwgo --config=playwright.config.ts --last-failed")
+	fmt.Fprintln(&b, "  pwgo --json-data-path=./tests.json --ui")
+
+	fmt.Println(b.String())
+}
+
 func main() {
 	projects := []string{}
 	var onlyChanged, lastFailed bool
+	var extraArgs []string
+	var grep, grepInvert string
+
+	for _, arg := range os.Args[1:] {
+		if arg == "--help" || arg == "-h" {
+			printHelp()
+			return
+		}
+	}
 
 	// Parse command-line flags
 	for i := 1; i < len(os.Args); i++ {
@@ -574,6 +659,21 @@ func main() {
 			for _, p := range strings.Fields(val) {
 				projects = append(projects, p)
 			}
+		case arg == "-g" || arg == "--grep":
+			if i+1 < len(os.Args) {
+				grep = os.Args[i+1]
+				i++
+			}
+		case strings.HasPrefix(arg, "--grep="):
+			grep = strings.TrimPrefix(arg, "--grep=")
+
+		case arg == "-gv" || arg == "--grep-invert":
+			if i+1 < len(os.Args) {
+				grepInvert = os.Args[i+1]
+				i++
+			}
+		case strings.HasPrefix(arg, "--grep-invert="):
+			grepInvert = strings.TrimPrefix(arg, "--grep-invert=")
 		case arg == "--json-data-path":
 			if i+1 < len(os.Args) {
 				jsonDataPath = os.Args[i+1]
@@ -597,6 +697,8 @@ func main() {
 			ui = true
 		case arg == "--headed":
 			headed = true
+		default:
+			extraArgs = append(extraArgs, arg)
 		}
 	}
 
@@ -614,7 +716,7 @@ func main() {
 			return
 		}
 	} else {
-		pwData, err = initData(projects, onlyChanged, lastFailed)
+		pwData, err = initData(projects, onlyChanged, lastFailed, grep, grepInvert)
 		if err != nil {
 			fmt.Println("Error initializing data:", err)
 			return
@@ -624,7 +726,7 @@ func main() {
 		fmt.Println("Error initializing data:", err)
 		return
 	}
-	p := tea.NewProgram(NewModel(pwData, projects))
+	p := tea.NewProgram(NewModel(pwData, projects, extraArgs))
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
 	}
