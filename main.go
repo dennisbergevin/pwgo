@@ -122,7 +122,12 @@ var keyMap = keymap{
 	ToggleLeft:  key.NewBinding(key.WithKeys("H", "shift+left"), key.WithHelp("H/Shift+Left", "toggle left")),
 }
 
-var statusMessageStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+var (
+	statusSelectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render // Green
+	statusRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render  // Red
+)
+
+var ui, headed bool
 
 func NewModel(pwData PlaywrightJSON, projects []string) model {
 	selectedList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 20)
@@ -209,9 +214,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "L", "shift+right":
+			m.lists[m.focusedIdx].NewStatusMessage("")
 			m.focusedIdx = (m.focusedIdx + 1) % len(m.lists)
 			m.rightFocused = m.focusedIdx == 3
 		case "H", "shift+left":
+			m.lists[m.focusedIdx].NewStatusMessage("")
 			m.focusedIdx = (m.focusedIdx + len(m.lists) - 1) % len(m.lists)
 			m.rightFocused = m.focusedIdx == 3
 		case "ctrl+c", "q":
@@ -225,6 +232,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						break
 					}
 					args := []string{"playwright", "test"}
+					if ui {
+						args = append(args, "--ui")
+					}
+					if headed {
+						args = append(args, "--headed")
+					}
 					it := selectedItem.(item)
 
 					if specs, ok := m.tagToSpecs[it.title]; ok && it.source == "Tags" {
@@ -260,6 +273,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// Else fallback: use the selected list as before
 				args := []string{"playwright", "test"}
+				if ui {
+					args = append(args, "--ui")
+				}
+				if headed {
+					args = append(args, "--headed")
+				}
 				seen := map[string]struct{}{}
 				var projects []string
 
@@ -311,7 +330,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case " ":
 			if m.lists[m.focusedIdx].FilterState() != list.Filtering {
-
 				if m.rightFocused {
 					// Remove from selected list and re-add to left
 					selectedItem := m.lists[3].SelectedItem()
@@ -332,6 +350,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					m.lists[3].SetItems(updated)
+
+					removedMsg := fmt.Sprintf("Removed %s", strings.ToLower(selectedItem.(item).source[:len(selectedItem.(item).source)-1]))
+					return m, m.lists[3].NewStatusMessage(statusRemoveStyle(removedMsg))
 				} else {
 					// Add to selected list and remove from left list
 					selectedItem := m.lists[m.focusedIdx].SelectedItem()
@@ -353,12 +374,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					m.lists[m.focusedIdx].SetItems(newItems)
+
+					addedMsg := fmt.Sprintf("Selected %s", strings.ToLower(selectedItem.(item).source[:len(selectedItem.(item).source)-1]))
+					return m, m.lists[m.focusedIdx].NewStatusMessage(statusSelectStyle(addedMsg))
 				}
-				return m, nil
 			}
 		}
 	}
-
 	var commd tea.Cmd
 	m.lists[m.focusedIdx], commd = m.lists[m.focusedIdx].Update(msg)
 	return m, commd
@@ -546,6 +568,10 @@ func main() {
 			onlyChanged = true
 		case arg == "--last-failed":
 			lastFailed = true
+		case arg == "--ui":
+			ui = true
+		case arg == "--headed":
+			headed = true
 		}
 	}
 
