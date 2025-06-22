@@ -3,9 +3,12 @@ pwgo
 pwgo.exe
 .DS_Store
 
+# Json-data-path example file
+json-data-example.json
+
 # Playwright
 /tests
-playwright.config.ts
+playwright*.config.ts
 package.json
 package-lock.json
 node_modules/

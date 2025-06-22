@@ -127,7 +127,11 @@ var (
 	statusRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render  // Red
 )
 
-var ui, headed bool
+var (
+	ui, headed   bool
+	configPath   string
+	jsonDataPath string
+)
 
 func NewModel(pwData PlaywrightJSON, projects []string) model {
 	selectedList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 20)
@@ -165,6 +169,9 @@ func initData(projects []string, onlyChanged, lastFailed bool) (PlaywrightJSON, 
 	}
 	if lastFailed {
 		args = append(args, "--last-failed")
+	}
+	if configPath != "" {
+		args = append(args, "--config", configPath)
 	}
 	for _, p := range projects {
 		args = append(args, "--project", p)
@@ -237,6 +244,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					if headed {
 						args = append(args, "--headed")
+					}
+					if configPath != "" {
+						args = append(args, "--config", configPath)
 					}
 					it := selectedItem.(item)
 
@@ -564,6 +574,21 @@ func main() {
 			for _, p := range strings.Fields(val) {
 				projects = append(projects, p)
 			}
+		case arg == "--json-data-path":
+			if i+1 < len(os.Args) {
+				jsonDataPath = os.Args[i+1]
+				i++
+			}
+		case strings.HasPrefix(arg, "--json-data-path="):
+			jsonDataPath = strings.TrimPrefix(arg, "--json-data-path=")
+		case arg == "-c" || arg == "--config":
+			if i+1 < len(os.Args) {
+				configPath = os.Args[i+1]
+				i++
+			}
+		case strings.HasPrefix(arg, "--config="):
+			configPath = strings.TrimPrefix(arg, "--config=")
+
 		case arg == "--only-changed":
 			onlyChanged = true
 		case arg == "--last-failed":
@@ -575,7 +600,26 @@ func main() {
 		}
 	}
 
-	pwData, err := initData(projects, onlyChanged, lastFailed)
+	var pwData PlaywrightJSON
+	var err error
+
+	if jsonDataPath != "" {
+		data, readErr := os.ReadFile(jsonDataPath)
+		if readErr != nil {
+			fmt.Printf("Error reading JSON file at %s: %v\n", jsonDataPath, readErr)
+			return
+		}
+		if jsonErr := json.Unmarshal(data, &pwData); jsonErr != nil {
+			fmt.Printf("Error parsing JSON data from file: %v\n", jsonErr)
+			return
+		}
+	} else {
+		pwData, err = initData(projects, onlyChanged, lastFailed)
+		if err != nil {
+			fmt.Println("Error initializing data:", err)
+			return
+		}
+	}
 	if err != nil {
 		fmt.Println("Error initializing data:", err)
 		return
