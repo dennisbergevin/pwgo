@@ -603,13 +603,10 @@ func printHelp() {
 	}{
 		{"--help, -h", "Show this help menu"},
 		{"--project <name>...", "Specify project(s) to run tests for"},
-		{"--project=<name>...", "Specify project(s) (alternative syntax)"},
 		{"--grep, -g <pattern>", "Only include tests matching this pattern (for --list only)"},
 		{"--grep-invert, -gv <pattern>", "Exclude tests matching this pattern (for --list only)"},
 		{"--config, -c <path>", "Path to Playwright config file"},
-		{"--config=<path>", "Path to Playwright config file (alternative syntax)"},
 		{"--json-data-path <path>", "Load Playwright test data from JSON file"},
-		{"--json-data-path=<path>", "Load Playwright test data from JSON file (alternative syntax)"},
 		{"--only-changed", "Run only tests related to changed files"},
 		{"--last-failed", "Run only last failed tests"},
 	}
@@ -623,6 +620,10 @@ func printHelp() {
 	fmt.Fprintln(&b, "  pwgo --project=webkit --only-changed")
 	fmt.Fprintln(&b, "  pwgo --config=playwright.config.ts --last-failed")
 	fmt.Fprintln(&b, "  pwgo --json-data-path=./tests.json --ui")
+
+	fmt.Fprintln(&b, "\n"+sectionTitle.Render("Additional Playwright Arguments"))
+	fmt.Fprintln(&b, description.Render(
+		"\nSee full list of Playwright CLI options at:\n  https://playwright.dev/docs/test-cli"))
 
 	fmt.Println(b.String())
 }
