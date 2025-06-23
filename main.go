@@ -130,7 +130,6 @@ var (
 )
 
 var (
-	ui, headed   bool
 	configPath   string
 	jsonDataPath string
 )
@@ -252,17 +251,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						break
 					}
 					args := []string{"playwright", "test"}
-					if ui {
-						args = append(args, "--ui")
-					}
-					if headed {
-						args = append(args, "--headed")
-					}
 					if configPath != "" {
 						args = append(args, "--config", configPath)
 					}
-					args = append(args, m.extraArgs...)
 					it := selectedItem.(item)
+					args = append(args, m.extraArgs...)
 
 					if specs, ok := m.tagToSpecs[it.title]; ok && it.source == "Tags" {
 						seen := map[string]struct{}{}
@@ -284,8 +277,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						default:
 							arg = it.title
 						}
-						args = append(args, arg)
 						args = append(args, m.extraArgs...)
+						args = append(args, arg)
 					}
 
 					for _, p := range m.projects {
@@ -298,14 +291,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// Else fallback: use the selected list as before
 				args := []string{"playwright", "test"}
-				if ui {
-					args = append(args, "--ui")
-				}
-				if headed {
-					args = append(args, "--headed")
-				}
 				seen := map[string]struct{}{}
 				var projects []string
+				args = append(args, m.extraArgs...)
 
 				for _, li := range m.lists[3].Items() {
 					it := li.(item)
@@ -602,25 +590,34 @@ func printHelp() {
 	description := lipgloss.NewStyle().Faint(true)
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "\n%s - Multi-list cli tool to run your Playwright suite\n\n", appName)
+	fmt.Fprintf(&b, "\n%s - Multi-list CLI tool to run your Playwright suite\n\n", appName)
 
 	fmt.Fprintln(&b, sectionTitle.Render("Usage"))
 	fmt.Fprintln(&b, "  pwgo [options]\n")
 
 	fmt.Fprintln(&b, sectionTitle.Render("Options"))
-	fmt.Fprintln(&b, "  --help, -h              "+description.Render("Show this help menu"))
-	fmt.Fprintln(&b, "  --project <name>...      "+description.Render("Specify project(s) to run tests for"))
-	fmt.Fprintln(&b, "  --project=<name>...      "+description.Render("Specify project(s) (alternative syntax)"))
-	fmt.Fprintln(&b, "  --grep, -g <pattern>        "+description.Render("Only include tests matching this pattern (for --list only)"))
-	fmt.Fprintln(&b, "  --grep-invert, -gv <pattern> "+description.Render("Exclude tests matching this pattern (for --list only)"))
-	fmt.Fprintln(&b, "  --config, -c <path>      "+description.Render("Path to Playwright config file"))
-	fmt.Fprintln(&b, "  --config=<path>          "+description.Render("Path to Playwright config file (alternative syntax)"))
-	fmt.Fprintln(&b, "  --json-data-path <path>  "+description.Render("Load Playwright test data from JSON file"))
-	fmt.Fprintln(&b, "  --json-data-path=<path>  "+description.Render("Load Playwright test data from JSON file (alternative syntax)"))
-	fmt.Fprintln(&b, "  --only-changed           "+description.Render("Run only tests related to changed files"))
-	fmt.Fprintln(&b, "  --last-failed            "+description.Render("Run only last failed tests"))
-	fmt.Fprintln(&b, "  --ui                     "+description.Render("Run tests in Playwright UI mode"))
-	fmt.Fprintln(&b, "  --headed                 "+description.Render("Run tests headed (with UI)"))
+
+	options := []struct {
+		flag string
+		desc string
+	}{
+		{"--help, -h", "Show this help menu"},
+		{"--project <name>...", "Specify project(s) to run tests for"},
+		{"--project=<name>...", "Specify project(s) (alternative syntax)"},
+		{"--grep, -g <pattern>", "Only include tests matching this pattern (for --list only)"},
+		{"--grep-invert, -gv <pattern>", "Exclude tests matching this pattern (for --list only)"},
+		{"--config, -c <path>", "Path to Playwright config file"},
+		{"--config=<path>", "Path to Playwright config file (alternative syntax)"},
+		{"--json-data-path <path>", "Load Playwright test data from JSON file"},
+		{"--json-data-path=<path>", "Load Playwright test data from JSON file (alternative syntax)"},
+		{"--only-changed", "Run only tests related to changed files"},
+		{"--last-failed", "Run only last failed tests"},
+	}
+
+	const padding = 30
+	for _, opt := range options {
+		fmt.Fprintf(&b, "  %-*s %s\n", padding, opt.flag, description.Render(opt.desc))
+	}
 
 	fmt.Fprintln(&b, "\n"+sectionTitle.Render("Examples"))
 	fmt.Fprintln(&b, "  pwgo --project=webkit --only-changed")
@@ -693,10 +690,6 @@ func main() {
 			onlyChanged = true
 		case arg == "--last-failed":
 			lastFailed = true
-		case arg == "--ui":
-			ui = true
-		case arg == "--headed":
-			headed = true
 		default:
 			extraArgs = append(extraArgs, arg)
 		}
