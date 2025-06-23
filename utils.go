@@ -44,10 +44,12 @@ func printHelp() {
 	description := lipgloss.NewStyle().Faint(true)
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "\n%s - Multi-list CLI tool to run your Playwright suite\n\n", appName)
+	fmt.Fprintln(&b)
+	fmt.Fprintf(&b, "%s - Multi-list CLI tool to run your Playwright suite\n\n", appName)
 
 	fmt.Fprintln(&b, sectionTitle.Render("Usage"))
-	fmt.Fprintln(&b, "  pwgo [options]\n")
+	fmt.Fprintln(&b, "  pwgo [options]")
+	fmt.Fprintln(&b)
 
 	fmt.Fprintln(&b, sectionTitle.Render("Options"))
 
@@ -70,14 +72,16 @@ func printHelp() {
 		fmt.Fprintf(&b, "  %-*s %s\n", padding, opt.flag, description.Render(opt.desc))
 	}
 
-	fmt.Fprintln(&b, "\n"+sectionTitle.Render("Examples"))
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, sectionTitle.Render("Examples"))
 	fmt.Fprintln(&b, "  pwgo --project=webkit --only-changed")
 	fmt.Fprintln(&b, "  pwgo --config=playwright.config.ts --last-failed")
 	fmt.Fprintln(&b, "  pwgo --json-data-path=./tests.json --ui")
 
-	fmt.Fprintln(&b, "\n"+sectionTitle.Render("Additional Playwright Arguments"))
-	fmt.Fprintln(&b, description.Render(
-		"\nSee full list of Playwright CLI options at:\n  https://playwright.dev/docs/test-cli"))
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, sectionTitle.Render("Additional Playwright Arguments"))
+	fmt.Fprintf(&b, "%s\n", description.Render(
+		"See full list of Playwright CLI options at:\n  https://playwright.dev/docs/test-cli"))
 
-	fmt.Println(b.String())
+	fmt.Print(b.String())
 }
