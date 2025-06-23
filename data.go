@@ -97,12 +97,10 @@ func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert 
 		for _, e := range pwData.Errors {
 			fmt.Printf("- %s\n", e.Message)
 		}
-		// Still return the error to exit
 		return pwData, fmt.Errorf("playwright returned %d error(s)", len(pwData.Errors))
 	}
 
 	if err != nil {
-		// Non-zero exit code, but JSON parsed and no 'errors' array
 		return pwData, fmt.Errorf("playwright failed: %w\nOutput:\n%s", err, out.String())
 	}
 
@@ -181,7 +179,7 @@ func collectData(
 	}
 
 	for _, child := range suite.Suites {
-		collectData(child, fullTitle, testItems, fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs, fileToProjects, tagToProjects) // pass new maps down
+		collectData(child, fullTitle, testItems, fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs, fileToProjects, tagToProjects)
 	}
 }
 
@@ -282,8 +280,8 @@ func buildLists(pwData PlaywrightJSON) (
 	fileToSpecs := map[string][]item{}
 	seenTests := map[string]struct{}{}
 	fileTagMap := map[string]map[string]struct{}{}
-	fileToProjects := map[string]map[string]struct{}{} // NEW
-	tagToProjects := map[string]map[string]struct{}{}  // NEW
+	fileToProjects := map[string]map[string]struct{}{}
+	tagToProjects := map[string]map[string]struct{}{}
 
 	for _, suite := range pwData.Suites {
 		collectData(suite, "", &testItems, &fileItems, tagSet, tagToSpecs, seenTests, fileTagMap, fileToSpecs, fileToProjects, tagToProjects)
