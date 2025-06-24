@@ -11,7 +11,6 @@ Set Height 1000
 
 Type "pwgo"
 Enter
-Wait+Screen /items/
 Sleep 1s
 Type "/"
 Sleep 1s
@@ -21,7 +20,10 @@ Enter
 Sleep 2s
 Space
 Sleep 2s
+Type "j"
+Sleep 2s
 Type "Shift+L"
+Type "j"
 Sleep 2s
 Type "Shift+L"
 Sleep 2s
@@ -58,9 +60,12 @@ Show
 Type "pwgo --config playwright.dev.config.ts"
 Sleep 1s
 Enter
-Wait+Screen /items/
+Sleep 2s
+Type "j"
 Sleep 2s
 Type "Shift+L"
+Sleep 2s
+Type "j"
 Sleep 2s
 Type "Shift+L"
 Sleep 2s
@@ -77,10 +82,15 @@ Type "pwgo --project webkit"
 Sleep 1s
 Enter
 Sleep 2s
-Type "Shift+L"
+Type "j"
 Sleep 2s
 Type "Shift+L"
 Sleep 2s
+Type "j"
+Sleep 2s
+Type "Shift+L"
+Sleep 2s
+Type "j"
 
 Hide
 Ctrl+c
