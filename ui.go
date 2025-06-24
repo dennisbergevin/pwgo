@@ -177,6 +177,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter":
 			if m.lists[m.focusedIdx].FilterState() != list.Filtering {
+				if len(m.lists[m.focusedIdx].Items()) == 0 {
+					msg := statusRemoveStyle("No items selected to submit")
+					return m, m.lists[m.focusedIdx].NewStatusMessage(msg)
+				}
 				// If no items selected on right, and enter pressed on left list, run that single item
 				if len(m.lists[3].Items()) == 0 && m.focusedIdx != 3 {
 					selectedItem := m.lists[m.focusedIdx].SelectedItem()
