@@ -16,15 +16,15 @@ Sleep 1s
 Type "/"
 Sleep 1s
 Type "Persistence"
-Sleep 400ms
+Sleep 1s
 Enter
-Sleep 1s
+Sleep 2s
 Space
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 Type "j"
 Sleep 400ms
 Type "j"
@@ -45,7 +45,7 @@ Show
 Type "pwgo --help"
 Sleep 1s
 Enter
-Sleep 3s
+Sleep 4s
 
 Hide
 Ctrl+c
@@ -59,11 +59,11 @@ Type "pwgo --config playwright.dev.config.ts"
 Sleep 1s
 Enter
 Wait+Screen /items/
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 
 Hide
 Ctrl+c
@@ -76,11 +76,11 @@ Show
 Type "pwgo --project webkit"
 Sleep 1s
 Enter
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Sleep 2s
 
 Hide
 Ctrl+c
