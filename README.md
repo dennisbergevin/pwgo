@@ -1,7 +1,7 @@
 <div align="center">
 <h1>️  pwgo  </h1>
 <h5 align="center">
-Multi-list cli tool to run your Playwright suite.
+Multi-list interactive cli tool to run your Playwright suite.
 </h5>
 </div>
 <br>
@@ -11,7 +11,8 @@ Multi-list cli tool to run your Playwright suite.
 
 ## Features
 
-- 📓 New interactive selectable list view of available files, tests, and tags
+- 👟 Interactive local run replacement command for `npx playwright test`
+- 📓 New selectable list view of available files, tests, and tags
 - ⏳ Filterable list search
 - 🔦 Tags, test and project total descriptive helpers
 
