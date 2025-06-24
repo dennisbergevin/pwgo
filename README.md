@@ -48,6 +48,9 @@ Or grab a binary from [the latest release](https://github.com/dennisbergevin/pwg
 
 ## Command line arguments
 
+> [!NOTE]  
+> For a complete list of options/arguments to pass to Playwright, refer to https://playwright.dev/docs/test-cli.
+
 ### Help mode
 
 All available commands are included in the help menu:
@@ -55,6 +58,8 @@ All available commands are included in the help menu:
 ```bash
 pwgo --help
 ```
+
+![Help demo](./assets/pwgo-help.png)
 
 ### Keyboard controls
 
