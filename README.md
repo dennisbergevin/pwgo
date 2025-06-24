@@ -22,6 +22,8 @@ Multi-list cli tool to run your Playwright suite.
 - [Installation](#installation)
 - [Command line arguments](#command-line-arguments)
   - [Help mode](#help-mode)
+  - [Keyboard controls](#keyboard-controls)
+- [Selecting items](#selecting-items)
 
 ---
 
@@ -82,3 +84,14 @@ pwgo --help
 |               <kbd>Esc</kbd>                |             Remove Filter             |
 | <kbd>Ctrl</kbd> + <kbd>c</kbd>/<kbd>q</kbd> |                 Quit                  |
 |                <kbd>?</kbd>                 |         Open/Close help menu          |
+
+## Selecting items
+
+Items can be selected via the <kbd>Space</kbd> key, which will add the item to the `Selected` list.
+
+Items can be removed from the `Selected` list and returned back to their original list via the <kbd>Space</kbd> key.
+
+> [!NOTE]  
+> If no items have been added to the `Selected` list, pressing <kbd>Enter</kbd> on an item will run that item.
+
+![Selecting demo](./assets/pwgo-selecting.gif)
