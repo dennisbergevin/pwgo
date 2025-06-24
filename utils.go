@@ -51,7 +51,7 @@ func printHelp() {
 	fmt.Fprintln(&b, "  pwgo [options]")
 	fmt.Fprintln(&b)
 
-	fmt.Fprintln(&b, sectionTitle.Render("Options"))
+	fmt.Fprintln(&b, sectionTitle.Render("Common Options"))
 
 	options := []struct {
 		flag string
