@@ -75,6 +75,6 @@ pwgo --help
 |    <kbd>Shift</kbd> + <kbd>Right/l</kbd>    |          Toggle to next list          |
 |    <kbd>Shift</kbd> + <kbd>Left/h</kbd>     |        Toggle to previous list        |
 |                <kbd>/</kbd>                 |          Open Filter search           |
-|              <kbd>Enter</kbd>               |        Submit/Run selection(s)        |
+|              <kbd>Enter</kbd>               |     Apply Filter/Run selection(s)     |
 | <kbd>Ctrl</kbd> + <kbd>c</kbd>/<kbd>q</kbd> |                 Quit                  |
 |                <kbd>?</kbd>                 |         Open/Close help menu          |
