@@ -53,7 +53,7 @@ Or grab a binary from [the latest release](https://github.com/dennisbergevin/pwg
 
 ### Help mode
 
-All available commands are included in the help menu:
+Common options are included in the help menu:
 
 ```bash
 pwgo --help
