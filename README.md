@@ -66,8 +66,6 @@ pwgo --help
 > [!NOTE]  
 > All keyboard controls are displayed on the bottom of the program. Additional commands can be seen by pressing the '?' key.
 
-![Keyboard controls](./assets/pwgo-help.gif)
-
 |                    Keys                     |                Action                 |
 | :-----------------------------------------: | :-----------------------------------: |
 |               <kbd>Up/k</kbd>               |    Move to selection above current    |
