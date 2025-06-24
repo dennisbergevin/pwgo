@@ -23,6 +23,7 @@ Sleep 2s
 Type "j"
 Sleep 2s
 Type "Shift+L"
+Sleep 2s
 Type "j"
 Sleep 2s
 Type "Shift+L"
@@ -32,9 +33,10 @@ Sleep 400ms
 Type "j"
 Sleep 400ms
 Space
-Sleep 1s
+Sleep 2s
 Type "Shift+L"
-Sleep 1s
+Wait+Screen /Selected/
+Sleep 2s
 
 Hide
 Ctrl+c
@@ -47,7 +49,7 @@ Show
 Type "pwgo --help"
 Sleep 1s
 Enter
-Sleep 4s
+Sleep 5s
 
 Hide
 Ctrl+c

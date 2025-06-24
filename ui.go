@@ -24,15 +24,18 @@ type item struct {
 }
 
 type model struct {
-	rightFocused bool
-	tagToSpecs   map[string][]item
-	list         list.Model
-	lists        []list.Model
-	focusedIdx   int
-	quitting     bool
-	projects     []string
-	fileToSpecs  map[string][]item
-	extraArgs    []string
+	rightFocused  bool
+	tagToSpecs    map[string][]item
+	list          list.Model
+	lists         []list.Model
+	focusedIdx    int
+	quitting      bool
+	projects      []string
+	fileToSpecs   map[string][]item
+	extraArgs     []string
+	originalTests []item
+	originalFiles []item
+	originalTags  []item
 }
 
 var keyMap = keymap{
@@ -44,6 +47,42 @@ var keyMap = keymap{
 }
 
 var appStyle = lipgloss.NewStyle().Padding(1, 2)
+
+func reinsertInOriginalPosition(sel item, listModel *list.Model, original []item) {
+	curItems := listModel.Items()
+	var newItems []list.Item
+	inserted := false
+
+	// Find target index in original
+	var targetIdx int
+	for i, it := range original {
+		if it.title == sel.title && it.description == sel.description {
+			targetIdx = i
+			break
+		}
+	}
+
+	for _, it := range curItems {
+		existing := it.(item)
+		var existingIdx int
+		for k, orig := range original {
+			if orig.title == existing.title && orig.description == existing.description {
+				existingIdx = k
+				break
+			}
+		}
+		if !inserted && targetIdx < existingIdx {
+			newItems = append(newItems, sel)
+			inserted = true
+		}
+		newItems = append(newItems, existing)
+	}
+	if !inserted {
+		newItems = append(newItems, sel)
+	}
+
+	listModel.SetItems(newItems)
+}
 
 func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) model {
 	selectedList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 20)
@@ -57,6 +96,18 @@ func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) mode
 	selectedList.Title = "Selected"
 	testList, fileList, tagList, tagToSpecs, fileToSpecs := buildLists(pwData)
 	lists := []list.Model{testList, fileList, tagList, selectedList}
+	originalTests := make([]item, len(testList.Items()))
+	for i, it := range testList.Items() {
+		originalTests[i] = it.(item)
+	}
+	originalFiles := make([]item, len(fileList.Items()))
+	for i, it := range fileList.Items() {
+		originalFiles[i] = it.(item)
+	}
+	originalTags := make([]item, len(tagList.Items()))
+	for i, it := range tagList.Items() {
+		originalTags[i] = it.(item)
+	}
 
 	for i := range lists {
 		lists[i].SetWidth(0)
@@ -64,12 +115,15 @@ func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) mode
 	}
 
 	return model{
-		lists:       lists,
-		focusedIdx:  0,
-		tagToSpecs:  tagToSpecs,
-		fileToSpecs: fileToSpecs,
-		projects:    projects,
-		extraArgs:   extraArgs,
+		lists:         lists,
+		focusedIdx:    0,
+		tagToSpecs:    tagToSpecs,
+		fileToSpecs:   fileToSpecs,
+		projects:      projects,
+		extraArgs:     extraArgs,
+		originalTests: originalTests,
+		originalFiles: originalFiles,
+		originalTags:  originalTags,
 	}
 }
 
@@ -234,9 +288,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							updated = append(updated, it)
 						} else {
 							// Put back into matching left list
+							sel := selectedItem.(item)
+							// Determine which original slice to use
+							var original []item
+							switch sel.source {
+							case "Tests":
+								original = m.originalTests
+							case "Files":
+								original = m.originalFiles
+							case "Tags":
+								original = m.originalTags
+							default:
+								break
+							}
+
+							// Call reinsertion once on the correct list
 							for i := range m.lists {
-								if m.lists[i].Title == selectedItem.(item).source {
-									m.lists[i].InsertItem(len(m.lists[i].Items()), selectedItem)
+								if m.lists[i].Title == sel.source {
+									reinsertInOriginalPosition(sel, &m.lists[i], original)
+									break
 								}
 							}
 						}
