@@ -97,11 +97,11 @@ func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert 
 		for _, e := range pwData.Errors {
 			fmt.Printf("- %s\n", e.Message)
 		}
-		return pwData, fmt.Errorf("playwright returned %d error(s)", len(pwData.Errors))
+		return pwData, fmt.Errorf("Playwright returned %d error(s)", len(pwData.Errors))
 	}
 
 	if err != nil {
-		return pwData, fmt.Errorf("playwright failed: %w\nOutput:\n%s", err, out.String())
+		return pwData, fmt.Errorf("Playwright failed: %w\nOutput:\n%s", err, out.String())
 	}
 
 	return pwData, nil
