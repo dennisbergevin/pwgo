@@ -39,9 +39,11 @@ var keyMap = keymap{
 	Submit:      key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "submit")),
 	Remove:      key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "remove")),
 	Select:      key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "select")),
-	ToggleRight: key.NewBinding(key.WithKeys("L", "shift+right"), key.WithHelp("L/Shift+Right", "toggle right")),
-	ToggleLeft:  key.NewBinding(key.WithKeys("H", "shift+left"), key.WithHelp("H/Shift+Left", "toggle left")),
+	ToggleRight: key.NewBinding(key.WithKeys("L", "shift+right"), key.WithHelp("Shift+Right/L", "toggle right")),
+	ToggleLeft:  key.NewBinding(key.WithKeys("H", "shift+left"), key.WithHelp("Shift+Left/H", "toggle left")),
 }
+
+var appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) model {
 	selectedList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 20)
@@ -56,11 +58,9 @@ func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) mode
 	testList, fileList, tagList, tagToSpecs, fileToSpecs := buildLists(pwData)
 	lists := []list.Model{testList, fileList, tagList, selectedList}
 
-	const leftListWidth = 120
-
 	for i := range lists {
-		lists[i].SetWidth(leftListWidth)
-		lists[i].SetHeight(30)
+		lists[i].SetWidth(0)
+		lists[i].SetHeight(0)
 	}
 
 	return model{
@@ -74,32 +74,35 @@ func NewModel(pwData PlaywrightJSON, projects []string, extraArgs []string) mode
 }
 
 func (i item) Title() string {
-	base := i.title
+	if i.source == "Tags" {
+		// Keep rendering tag styling for tag items
+		return fmt.Sprintf("%s  %s", i.title, tagStyleFor(i.title).Render(i.title))
+	}
+	return i.title
+}
 
-	// If it's already got tags (e.g., File or Test), use them
+func (i item) Description() string {
 	if len(i.tags) > 0 {
 		var styledTags []string
 		for _, tag := range i.tags {
 			styledTags = append(styledTags, tagStyleFor(tag).Render(tag))
 		}
-		return fmt.Sprintf("%s  %s", base, lipgloss.JoinHorizontal(lipgloss.Left, styledTags...))
+		return fmt.Sprintf("%s  %s", i.description, lipgloss.JoinHorizontal(lipgloss.Left, styledTags...))
 	}
-
-	// If it's a tag item, show how it appears in files/tests by rendering the tag itself
-	if i.source == "Tags" {
-		styled := tagStyleFor(i.title).Render(i.title)
-		return fmt.Sprintf("%s  %s", i.title, styled)
-	}
-
-	return base
+	return i.description
 }
-func (i item) Description() string { return i.description }
+
 func (i item) FilterValue() string { return i.title }
 
 func (m model) Init() tea.Cmd { return nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		h, v := appStyle.GetFrameSize()
+		for i := range m.lists {
+			m.lists[i].SetSize(msg.Width-h, msg.Height-v)
+		}
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "L", "shift+right":
