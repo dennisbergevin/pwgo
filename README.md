@@ -63,18 +63,18 @@ pwgo --help
 
 ![Keyboard controls](./assets/pwgo-help.gif)
 
-> |                    Keys                     |                Action                 |
-> | :-----------------------------------------: | :-----------------------------------: |
-> |               <kbd>Up/k</kbd>               |    Move to selection above current    |
-> |              <kbd>Down/j</kbd>              |    Move to selection below current    |
-> |           <kbd>Right/l/pgdn</kbd>           |   Move to next page on current list   |
-> |           <kbd>Left/h/pgdn</kbd>            | Move to previous page on current list |
-> |              <kbd>g/home</kbd>              |      Go to start of current list      |
-> |              <kbd>G/end</kbd>               |       Go to end of current list       |
-> |              <kbd>Space</kbd>               |            Select current             |
-> |    <kbd>Shift</kbd> + <kbd>Right/l</kbd>    |          Toggle to next list          |
-> |    <kbd>Shift</kbd> + <kbd>Left/h</kbd>     |        Toggle to previous list        |
-> |                <kbd>/</kbd>                 |          Open Filter search           |
-> |              <kbd>Enter</kbd>               |        Submit/Run selection(s)        |
-> | <kbd>Ctrl</kbd> + <kbd>c</kbd>/<kbd>q</kbd> |                 Quit                  |
-> |                <kbd>?</kbd>                 |         Open/Close help menu          |
+|                    Keys                     |                Action                 |
+| :-----------------------------------------: | :-----------------------------------: |
+|               <kbd>Up/k</kbd>               |    Move to selection above current    |
+|              <kbd>Down/j</kbd>              |    Move to selection below current    |
+|           <kbd>Right/l/pgdn</kbd>           |   Move to next page on current list   |
+|           <kbd>Left/h/pgdn</kbd>            | Move to previous page on current list |
+|              <kbd>g/home</kbd>              |      Go to start of current list      |
+|              <kbd>G/end</kbd>               |       Go to end of current list       |
+|              <kbd>Space</kbd>               |            Select current             |
+|    <kbd>Shift</kbd> + <kbd>Right/l</kbd>    |          Toggle to next list          |
+|    <kbd>Shift</kbd> + <kbd>Left/h</kbd>     |        Toggle to previous list        |
+|                <kbd>/</kbd>                 |          Open Filter search           |
+|              <kbd>Enter</kbd>               |        Submit/Run selection(s)        |
+| <kbd>Ctrl</kbd> + <kbd>c</kbd>/<kbd>q</kbd> |                 Quit                  |
+|                <kbd>?</kbd>                 |         Open/Close help menu          |
