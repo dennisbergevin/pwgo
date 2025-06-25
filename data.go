@@ -78,7 +78,7 @@ func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert 
 	cmd := exec.Command("npx", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	cmd.Stderr = &out
+	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 
