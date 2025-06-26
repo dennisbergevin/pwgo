@@ -85,7 +85,7 @@ func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert 
 	var pwData PlaywrightJSON
 	if jsonErr := json.Unmarshal(out.Bytes(), &pwData); jsonErr != nil {
 		// If it's not even valid JSON, return the raw output + error
-		return PlaywrightJSON{}, fmt.Errorf("failed to parse JSON output: %w\nOutput:\n%s", jsonErr, out.String())
+		return PlaywrightJSON{}, fmt.Errorf("failed to parse JSON output: %w", jsonErr)
 	}
 
 	if len(pwData.Suites) == 0 {
@@ -101,7 +101,7 @@ func initData(projects []string, onlyChanged, lastFailed bool, grep, grepInvert 
 	}
 
 	if err != nil {
-		return pwData, fmt.Errorf("Playwright failed: %w\nOutput:\n%s", err, out.String())
+		return pwData, fmt.Errorf("Playwright command failed: %w", err)
 	}
 
 	return pwData, nil
